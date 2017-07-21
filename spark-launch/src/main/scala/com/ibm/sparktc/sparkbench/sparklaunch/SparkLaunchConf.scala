@@ -41,14 +41,6 @@ object SparkLaunchConf {
   def getSparkArgs(sparkContextConf: Config): Array[String] = {
     val sparkConfMaps = Try(sparkContextConf.getObject("spark-args")).map(toStringMap).getOrElse(Map.empty)
 
-    /*val cp = {
-      if (sparkConfMaps.contains("driver-class-path")) Map.empty
-      else sys.env.get("SPARK_BENCH_CLASSPATH") match {
-        case Some(envCp) => Map("driver-class-path" -> envCp)
-        case _ => Map.empty
-      }
-    }*/
-
     val master = {
       if (sparkConfMaps.contains("master")) Map.empty
       else Map("master" -> getOrThrow(sys.env.get("SPARK_MASTER_HOST"), "The environment variable SPARK_MASTER_HOST must be set"))

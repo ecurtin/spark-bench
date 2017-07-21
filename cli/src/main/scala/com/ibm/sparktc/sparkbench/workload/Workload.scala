@@ -25,17 +25,20 @@ trait Workload {
     */
   def doWorkload(df: Option[DataFrame], sparkSession: SparkSession): DataFrame
 
-  def run(spark: SparkSession): DataFrame = {
-
-    val df = input match {
-      case None => None
-      case Some(in) => {
-        val rawDF = load(spark, in)
-        Some(reconcileSchema(rawDF))
-      }
+  def run(spark: SparkSession, dryRun: Boolean): DataFrame = {
+    val res = if (dryRun) {
+      spark.emptyDataFrame
     }
-
-    val res = doWorkload(df, spark).coalesce(1)
+    else {
+      val df = input match {
+        case None => None
+        case Some(in) => {
+          val rawDF = load(spark, in)
+          Some(reconcileSchema(rawDF))
+        }
+      }
+      doWorkload(df, spark).coalesce(1)
+    }
     addConfToResults(res, toMap)
   }
 

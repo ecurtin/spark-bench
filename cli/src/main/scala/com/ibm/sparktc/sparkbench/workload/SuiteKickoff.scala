@@ -71,11 +71,11 @@ object SuiteKickoff {
   private def runParallel(workloadConfigs: Seq[Workload], spark: SparkSession): Seq[DataFrame] = {
     val confSeqPar = workloadConfigs.par
     confSeqPar.tasksupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(confSeqPar.size))
-    confSeqPar.map(_.run(spark)).seq
+    confSeqPar.map(_.run(spark, false)).seq
   }
 
   private def runSerially(workloadConfigs: Seq[Workload], spark: SparkSession): Seq[DataFrame] = {
-    workloadConfigs.map(_.run(spark))
+    workloadConfigs.map(_.run(spark, false))
   }
 
   private def joinDataFrames(seq: Seq[DataFrame], spark: SparkSession): DataFrame = {

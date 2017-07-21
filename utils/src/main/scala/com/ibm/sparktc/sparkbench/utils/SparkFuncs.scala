@@ -60,9 +60,9 @@ object SparkFuncs {
       case _ => a
     }
 
-    var ddf: DataFrame = df
-    m.foreach( keyValue => ddf = ddf.withColumn(keyValue._1, lit(dealWithNones(keyValue._2))) )
-    ddf
+   m.foldLeft(df) {
+      (partial, keyval) => partial.withColumn(keyval._1, lit(dealWithNones(keyval._2)))
+    }
   }
 
 }
