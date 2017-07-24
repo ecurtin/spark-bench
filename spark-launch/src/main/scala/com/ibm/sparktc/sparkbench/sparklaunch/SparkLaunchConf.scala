@@ -11,6 +11,7 @@ import scala.util.Try
 
 case class SparkLaunchConf(
                             `class`: String,
+                            sparkHome: String,
                             sparkBenchJar: String,
                             sparkConfs : Array[String],
                             sparkArgs: Array[String],
@@ -18,7 +19,7 @@ case class SparkLaunchConf(
                           ){
 
   def toSparkArgs: Array[String] =
-    Array(s"--class ${`class`}") ++ sparkArgs ++ sparkConfs ++ Array(sparkBenchJar) ++ childArgs
+    Array("--class", `class`) ++ sparkArgs ++ sparkConfs ++ Array(sparkBenchJar) ++ childArgs
 
 }
 
@@ -27,6 +28,7 @@ object SparkLaunchConf {
   def apply(sparkContextConf: Config, path: String): SparkLaunchConf = {
     SparkLaunchConf(
       `class` = getSparkBenchClass(sparkContextConf),
+      sparkHome = getSparkHome(sparkContextConf),
       sparkBenchJar = getSparkBenchJar(sparkContextConf),
       sparkArgs = getSparkArgs(sparkContextConf),
       sparkConfs = getSparkConfs(sparkContextConf),
@@ -36,6 +38,12 @@ object SparkLaunchConf {
 
   def getSparkBenchClass(sparkContextConf: Config): String = {
     Try(sparkContextConf.getString("class")).toOption.getOrElse("com.ibm.sparktc.sparkbench.cli.CLIKickoff")
+  }
+
+  def getSparkHome(sparkContextConf: Config): String = {
+    Try(sparkContextConf.getString("spark-home")).getOrElse(
+      getOrThrow(sys.env.get("SPARK_HOME"), "The environment variable SPARK_HOME must be set")
+    )
   }
 
   def getSparkArgs(sparkContextConf: Config): Array[String] = {
@@ -48,7 +56,7 @@ object SparkLaunchConf {
 
     val correctedSparkConf = sparkConfMaps ++ master
     assert(correctedSparkConf.contains("master"))
-    correctedSparkConf.foldLeft(Array[String]()) { case (arr, (k, v)) => arr ++ Array(s"--$k $v") }
+    sparkConfMaps.foldLeft(Array[String]()) { case (arr, (k, v)) => arr ++ Array("--" + k, v) }
   }
 
   def getSparkBenchJar(sparkContextConf: Config): String = {
@@ -85,7 +93,7 @@ object SparkLaunchConf {
 
   def getSparkConfs(conf: Config): Array[String] = {
     val sparkConfMaps = Try(conf.getObject("conf")).map(toStringMap).getOrElse(Map.empty)
-    sparkConfMaps.foldLeft(Array[String]()) { case (arr, (k, v)) => arr ++ Array(s"--conf $k=$v") }
+    sparkConfMaps.foldLeft(Array[String]()) { case (arr, (k, v)) => arr ++ Array("--conf", s"$k=$v") }
   }
 
 
