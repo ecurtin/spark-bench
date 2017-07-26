@@ -55,7 +55,6 @@ object SparkLaunchConf {
     }
 
     val correctedSparkConf = sparkConfMaps ++ master
-    assert(correctedSparkConf.contains("master"))
     correctedSparkConf.foldLeft(Array[String]()) { case (arr, (k, v)) => arr ++ Array("--" + k, v) }
   }
 

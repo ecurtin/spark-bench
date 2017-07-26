@@ -27,6 +27,7 @@ class SparkLaunchConfTest extends FlatSpec with Matchers with BeforeAndAfter {
     )
 
     conf1.sparkConfs shouldBe expectedSparkConfs
+    conf1.sparkArgs should contain ("--master")
 
     SparkLaunch.rmTmpFiles(sparkContextConfs.map(_._2))
 
@@ -43,6 +44,7 @@ class SparkLaunchConfTest extends FlatSpec with Matchers with BeforeAndAfter {
     val conf2 = sparkContextConfs.head._1
 
     conf2.sparkConfs.isEmpty shouldBe true
+    conf2.sparkArgs should contain ("--master")
 
     SparkLaunch.rmTmpFiles(sparkContextConfs.map(_._2))
   }
