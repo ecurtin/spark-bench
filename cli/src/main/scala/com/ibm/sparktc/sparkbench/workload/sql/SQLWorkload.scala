@@ -6,12 +6,9 @@ import com.ibm.sparktc.sparkbench.workload.{Workload, WorkloadDefaults}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 case class SQLWorkloadResult(
-                            name: String,
-                            timestamp: Long,
                             loadTime: Long,
                             queryTime: Long,
-                            saveTime: Long = 0L,
-                            total_Runtime: Long
+                            saveTime: Long = 0L
                             )
 
 object SQLWorkload extends WorkloadDefaults {
@@ -46,26 +43,19 @@ case class SQLWorkload (input: Option[String],
   }
 
   override def doWorkload(df: Option[DataFrame] = None, spark: SparkSession): DataFrame = {
-    val timestamp = System.currentTimeMillis()
     val (loadtime, df) = loadFromDisk(spark)
     val (querytime, res) = query(df, spark)
     val (savetime, _) = output match {
       case Some(dir) => save(res, dir, spark)
       case _ => (0L, Unit)
     }
-    val total = loadtime + querytime + savetime
-
     spark.createDataFrame(Seq(
       SQLWorkloadResult(
-        "sql",
-        timestamp,
         loadtime,
         querytime,
-        savetime,
-        total
+        savetime
       )
     ))
   }
 
 }
-

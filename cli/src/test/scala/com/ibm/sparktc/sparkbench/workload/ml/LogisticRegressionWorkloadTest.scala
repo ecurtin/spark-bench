@@ -73,7 +73,6 @@ class LogisticRegressionWorkloadTest extends FlatSpec with Matchers {
     val odf = lr.doWorkload(Some(ds), spark)
     odf.count shouldBe 1
     val r = odf.head
-    r.getAs[String]("name") shouldBe "lr-bml"
     r.getAs[String]("input") shouldBe input
     r.getAs[String]("test_file") shouldBe testFile
     r.getAs[Long]("train_count") shouldBe 10L

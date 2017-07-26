@@ -1,7 +1,8 @@
 package com.ibm.sparktc.sparkbench.utils
 
 import org.apache.spark.sql.functions.lit
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 object SparkFuncs {
 
@@ -23,6 +24,10 @@ object SparkFuncs {
         s"Please check the file extension or add a file format to your arguments: $outputDir")
     }
   }
+
+  def zeroColRes(spark: SparkSession): DataFrame =
+    // DataFrame with one row and no columns
+    spark.createDataFrame(spark.sparkContext.parallelize(Seq(Row())), StructType(Seq()))
 
   def load(spark: SparkSession, inputDir: String, fileFormat: Option[String] = None): DataFrame = {
 

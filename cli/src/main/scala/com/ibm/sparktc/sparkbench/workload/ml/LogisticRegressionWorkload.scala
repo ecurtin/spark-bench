@@ -13,9 +13,7 @@ import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 // ¯\_(ツ)_/¯
 
 case class LogisticRegressionResult(
-                                     name: String,
                                      appid: String,
-                                     start_time: Long,
                                      input: String,
                                      train_count: Long,
                                      train_time: Long,
@@ -24,7 +22,6 @@ case class LogisticRegressionResult(
                                      test_time: Long,
                                      load_time: Long,
                                      count_time: Long,
-                                     total_runtime: Long,
                                      area_under_roc: Double
                                    )
 
@@ -66,7 +63,6 @@ case class LogisticRegressionWorkload(
   }
 
   override def doWorkload(df: Option[DataFrame], spark: SparkSession): DataFrame = {
-    val startTime = System.currentTimeMillis
     val (ltrainTime, d_train) = ld(s"${input.get}")(spark)
     val (ltestTime, d_test) = ld(s"$testFile")(spark)
     val (countTime, (trainCount, testCount)) = time { (d_train.count(), d_test.count()) }
@@ -78,9 +74,7 @@ case class LogisticRegressionWorkload(
     //spark.createDataFrame(Seq(SleepResult("sleep", timestamp, t)))
 
     spark.createDataFrame(Seq(LogisticRegressionResult(
-      name = "lr-bml",
       appid = spark.sparkContext.applicationId,
-      startTime,
       input.get,
       train_count = trainCount,
       trainTime,
@@ -89,7 +83,6 @@ case class LogisticRegressionWorkload(
       testTime,
       loadTime,
       countTime,
-      loadTime + trainTime + testTime,
       areaUnderROC
     )))
   }

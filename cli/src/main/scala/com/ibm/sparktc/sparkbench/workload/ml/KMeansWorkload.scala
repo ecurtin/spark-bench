@@ -54,8 +54,6 @@ case class KMeansWorkload(input: Option[String],
                           maxIterations: Int) extends Workload {
 
   override def doWorkload(df: Option[DataFrame], spark: SparkSession): DataFrame = {
-    val timestamp = System.currentTimeMillis()
-
     val (loadtime, data) = loadToCache(df.get, spark) // Should fail loudly if df == None
     val (trainTime, model) = train(data, spark)
     val (testTime, _) = test(model, data, spark)
@@ -63,23 +61,16 @@ case class KMeansWorkload(input: Option[String],
       case Some(_) => save(data, model, spark)
       case _ => (null, Unit)
     }
-
-    val total = loadtime + trainTime + testTime
-                + (if (saveTime == null) 0L else saveTime.asInstanceOf[Long])
-
     val schema = StructType(
       List(
-        StructField("name", StringType, nullable = false),
-        StructField("timestamp", LongType, nullable = false),
         StructField("load", LongType, nullable = true),
         StructField("train", LongType, nullable = true),
         StructField("test", LongType, nullable = true),
-        StructField("save", LongType, nullable = true),
-        StructField("total_runtime", LongType, nullable = false)
+        StructField("save", LongType, nullable = true)
       )
     )
 
-    val timeList = spark.sparkContext.parallelize(Seq(Row("kmeans", timestamp, loadtime, trainTime, testTime, saveTime, total)))
+    val timeList = spark.sparkContext.parallelize(Seq(Row(loadtime, trainTime, testTime, saveTime)))
 
     spark.createDataFrame(timeList, schema)
   }

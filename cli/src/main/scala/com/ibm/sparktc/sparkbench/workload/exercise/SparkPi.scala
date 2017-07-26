@@ -6,13 +6,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import scala.math.random
 
-
-case class SparkPiResult(
-                        name: String,
-                        timestamp: Long,
-                        total_runtime: Long,
-                        pi_approximate: Double
-                      )
+case class SparkPiResult(pi_approximate: Double)
 
 object SparkPi extends WorkloadDefaults {
   val name = "sparkpi"
@@ -42,9 +36,7 @@ case class SparkPi(input: Option[String] = None,
   }
 
   override def doWorkload(df: Option[DataFrame] = None, spark: SparkSession): DataFrame = {
-    val timestamp = System.currentTimeMillis()
-    val (t, pi) = time(sparkPi(spark))
-    spark.createDataFrame(Seq(SparkPiResult("sparkpi", timestamp, t, pi)))
+    spark.createDataFrame(Seq(SparkPiResult(sparkPi(spark))))
   }
 
 }

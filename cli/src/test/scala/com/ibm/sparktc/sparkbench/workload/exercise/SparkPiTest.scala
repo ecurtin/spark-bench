@@ -8,11 +8,11 @@ class SparkPiTest extends FlatSpec with Matchers with BeforeAndAfterEach {
 
   "SparkPi" should "instantiate and run" in {
     val workload = SparkPi(Map("slices" -> 4))
-    val res = workload.doWorkload(None, spark).collect
+    val res = workload.run(spark).collect
     res.length shouldBe 1
     val row = res(0)
-    row.length shouldBe 4
-    row.getAs[String]("name") shouldBe "sparkpi"
+    row.length shouldBe 7
+    //row.getAs[String]("name") shouldBe "sparkpi"
     row.getAs[Double]("pi_approximate") shouldBe 3.14 +- 1
   }
 
@@ -20,7 +20,7 @@ class SparkPiTest extends FlatSpec with Matchers with BeforeAndAfterEach {
     val res = SparkPi(Map("slices" -> 4)).run(spark, true).collect
     res.length shouldBe 1
     val cols = res(0).schema.toList.map(_.name)
-    cols.length shouldBe 3
+    cols.length shouldBe 6
     cols should not contain "pi_approximate"
   }
 }

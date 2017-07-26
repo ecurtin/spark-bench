@@ -2,7 +2,9 @@ package com.ibm.sparktc.sparkbench.workload
 
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import com.ibm.sparktc.sparkbench.utils.SparkFuncs.{load, addConfToResults}
-import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.types._
+import com.ibm.sparktc.sparkbench.utils.GeneralFunctions.time
+import com.ibm.sparktc.sparkbench.utils.SparkFuncs
 
 trait WorkloadDefaults {
   val name: String
@@ -27,21 +29,28 @@ trait Workload {
   def doWorkload(df: Option[DataFrame], sparkSession: SparkSession): DataFrame
 
   def run(spark: SparkSession, dryRun: Boolean = false): DataFrame = {
-    val res = if (dryRun) {
-      // DataFrame with one row and no columns
-      spark.createDataFrame(spark.sparkContext.parallelize(Seq(Row())), StructType(Seq()))
+    val start = System.currentTimeMillis
+    val (runtime, res) = if (dryRun) {
+      (0L, SparkFuncs.zeroColRes(spark))
     }
     else {
       val df = input match {
         case None => None
-        case Some(in) => {
-          val rawDF = load(spark, in)
-          Some(reconcileSchema(rawDF))
-        }
+        case Some(in) => Some(reconcileSchema(load(spark, in)))
       }
-      doWorkload(df, spark).coalesce(1)
+      time(doWorkload(df, spark).coalesce(1))
     }
-    addConfToResults(res, toMap)
+    composeResults(spark, res, start, runtime)
+  }
+
+  def composeResults(spark: SparkSession, df: DataFrame, start: Long, runtime: Long): DataFrame = {
+    val schema = StructType(Seq(
+      StructField("name", StringType),
+      StructField("start_time", LongType),
+      StructField("total_runtime", LongType)
+    ))
+    val info = spark.createDataFrame(spark.sparkContext.parallelize(Seq(Row("name", start, runtime))), schema)
+    addConfToResults(info.crossJoin(df), toMap)
   }
 
   def toMap: Map[String, Any] =
