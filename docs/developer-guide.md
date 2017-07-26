@@ -17,6 +17,9 @@ Contributions welcome!
 spark-bench is a multi-project SBT build. The build is mainly defined in [build.sbt](../build.sbt) and dependencies
 are defined in [Dependencies.scala](../project/Dependencies.scala).
 
+Note that to run tests with `sbt test`, the `SPARK_HOME` environment variable must be set to an installation of Spark,
+just like for any other invocation of spark-bench.
+
 ## Adding a New Data Generator
 
 All the data generators live in the data generator project. Let's add a new data generator called FooGenerator.

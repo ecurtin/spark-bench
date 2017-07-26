@@ -56,9 +56,10 @@ this is just one. I recommend adding the following line to your bash_profile:
 ```bash
 export SBT_OPTS="-Xmx1536M -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=2G -Xss2M"
 ```
-Now you're ready to test spark-bench, if you so desire.
+Now you're ready to test spark-bench, if you so desire.  Running tests requires Spark to be installed and the
+`SPARK_HOME` environment variable to be set, so make sure you take care of that before testing.
 ```bash
-sbt test
+SPARK_HOME=/path/to/spark sbt test
 ```
 And finally to build the distribution folder and associated tar file.
 ```bash

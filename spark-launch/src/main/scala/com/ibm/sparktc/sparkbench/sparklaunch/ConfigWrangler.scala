@@ -30,7 +30,7 @@ object ConfigWrangler {
     * @param path
     * @return a Seq of paths to the created files.
     */
-  def apply(path: File): Seq[(SparkLaunchConf, String)] = {
+  def apply(path: File, dryRun: Boolean): Seq[(SparkLaunchConf, String)] = {
     val config: Config = ConfigFactory.parseFile(path)
     val sparkBenchConfig = config.getObject("spark-bench").toConfig
     val sparkContextConfs = getConfigListByName("spark-submit-config", sparkBenchConfig)
@@ -41,6 +41,7 @@ object ConfigWrangler {
       val newConf = sparkBenchConfig
         .withoutPath("spark-submit-config")
         .withValue("spark-submit-config", ConfigValueFactory.fromIterable(Iterable(conf.root).asJava))
+        .withValue("dry-run", ConfigValueFactory.fromAnyRef(dryRun))
       val sbConf = ConfigFactory.empty.withValue("spark-bench", newConf.root)
       val output = sbConf.root.render(concise.setJson(false))
       Files.write(tmpFile, output.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)

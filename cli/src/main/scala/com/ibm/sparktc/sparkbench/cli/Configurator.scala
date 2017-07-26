@@ -17,6 +17,7 @@ object Configurator {
     val config: Config = ConfigFactory.parseFile(file)
     val sparkBenchConfig = config.getObject("spark-bench").toConfig
     val sparkContextConfs = parseSparkBenchRunConfig(sparkBenchConfig)
+    GlobalConfig.fromConf(sparkBenchConfig)
     sparkContextConfs
   }
 

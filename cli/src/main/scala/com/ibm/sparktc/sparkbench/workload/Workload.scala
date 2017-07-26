@@ -1,7 +1,8 @@
 package com.ibm.sparktc.sparkbench.workload
 
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import com.ibm.sparktc.sparkbench.utils.SparkFuncs.{load, addConfToResults}
+import org.apache.spark.sql.types.StructType
 
 trait WorkloadDefaults {
   val name: String
@@ -25,9 +26,10 @@ trait Workload {
     */
   def doWorkload(df: Option[DataFrame], sparkSession: SparkSession): DataFrame
 
-  def run(spark: SparkSession, dryRun: Boolean): DataFrame = {
+  def run(spark: SparkSession, dryRun: Boolean = false): DataFrame = {
     val res = if (dryRun) {
-      spark.emptyDataFrame
+      // DataFrame with one row and no columns
+      spark.createDataFrame(spark.sparkContext.parallelize(Seq(Row())), StructType(Seq()))
     }
     else {
       val df = input match {

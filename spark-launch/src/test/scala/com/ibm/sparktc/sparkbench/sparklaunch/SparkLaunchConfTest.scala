@@ -17,7 +17,7 @@ class SparkLaunchConfTest extends FlatSpec with Matchers with BeforeAndAfter {
     val relativePath = "/etc/sparkConfTest.conf"
     val resource = new File(getClass.getResource(relativePath).toURI)
 //    val source = scala.io.Source.fromFile(resource)
-    val (sparkContextConfs, _) = SparkLaunch.mkConfs(resource)
+    val (sparkContextConfs, _) = SparkLaunch.mkConfs(resource, dryRun = false)
     val conf1 = sparkContextConfs.head._1
 
     val expectedSparkConfs = Array(
@@ -39,7 +39,7 @@ class SparkLaunchConfTest extends FlatSpec with Matchers with BeforeAndAfter {
   it should "not blow up when spark context confs are left out" in {
     val relativePath = "/etc/testConfFile1.conf"
     val resource = new File(getClass.getResource(relativePath).toURI)
-    val (sparkContextConfs, _) = SparkLaunch.mkConfs(resource)
+    val (sparkContextConfs, _) = SparkLaunch.mkConfs(resource, dryRun = false)
     val conf2 = sparkContextConfs.head._1
 
     conf2.sparkConfs.isEmpty shouldBe true

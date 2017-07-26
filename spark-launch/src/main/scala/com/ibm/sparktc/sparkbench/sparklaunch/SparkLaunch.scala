@@ -6,21 +6,28 @@ import scala.collection.parallel.ForkJoinTaskSupport
 import scala.collection.JavaConverters._
 import scala.sys.process._
 import scala.util.Try
+import com.ibm.sparktc.sparkbench.utils.GeneralFunctions.getOrThrow
 
 object SparkLaunch extends App {
 
   override def main(args: Array[String]): Unit = {
-    assert(args.nonEmpty)
-    val path = args.head
-    val (confSeq: Seq[(SparkLaunchConf, String)], parallel: Boolean) = mkConfs(new File(path))
+    case class TempArgs(path: Option[String], dryRun: Boolean)
+    val defaults = TempArgs(None, false)
+    val parsedArgs: TempArgs = args.foldLeft(defaults)((rollup, arg) =>
+      if (arg == "--dryrun") rollup.copy(dryRun = true)
+      else if (rollup.path.isDefined) throw new IllegalArgumentException("Trailing arguments")
+      else rollup.copy(path = Some(arg))
+    )
+    val path = getOrThrow(parsedArgs.path, "Missing configuration file")
+    val (confSeq: Seq[(SparkLaunchConf, String)], parallel: Boolean) = mkConfs(new File(path), parsedArgs.dryRun)
     run(confSeq.map(_._1), parallel)
     rmTmpFiles(confSeq.map(_._2))
   }
 
-  def mkConfs(file: File): (Seq[(SparkLaunchConf, String)], Boolean) = {
+  def mkConfs(file: File, dryRun: Boolean): (Seq[(SparkLaunchConf, String)], Boolean) = {
     val config: Config = ConfigFactory.parseFile(file)
     val sparkBenchConfig = config.getObject("spark-bench").toConfig
-    val confs: Seq[(SparkLaunchConf, String)] = ConfigWrangler(file)
+    val confs: Seq[(SparkLaunchConf, String)] = ConfigWrangler(file, dryRun)
     val parallel = Try(sparkBenchConfig.getBoolean("spark-submit-parallel")).getOrElse(false)
     (confs, parallel)
   }

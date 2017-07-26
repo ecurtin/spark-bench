@@ -1,5 +1,6 @@
 package com.ibm.sparktc.sparkbench.workload
 
+import com.ibm.sparktc.sparkbench.cli.GlobalConfig
 import com.ibm.sparktc.sparkbench.utils.SparkFuncs.{writeToDisk, addConfToResults}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.functions.{col, lit}
@@ -71,11 +72,11 @@ object SuiteKickoff {
   private def runParallel(workloadConfigs: Seq[Workload], spark: SparkSession): Seq[DataFrame] = {
     val confSeqPar = workloadConfigs.par
     confSeqPar.tasksupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(confSeqPar.size))
-    confSeqPar.map(_.run(spark, false)).seq
+    confSeqPar.map(_.run(spark, GlobalConfig.dryRun)).seq
   }
 
   private def runSerially(workloadConfigs: Seq[Workload], spark: SparkSession): Seq[DataFrame] = {
-    workloadConfigs.map(_.run(spark, false))
+    workloadConfigs.map(_.run(spark, GlobalConfig.dryRun))
   }
 
   private def joinDataFrames(seq: Seq[DataFrame], spark: SparkSession): DataFrame = {
