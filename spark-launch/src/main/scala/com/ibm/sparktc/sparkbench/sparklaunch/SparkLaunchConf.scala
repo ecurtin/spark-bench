@@ -55,7 +55,7 @@ object SparkLaunchConf {
     }
 
     val correctedSparkConf = sparkConfMaps ++ master
-    correctedSparkConf.foldLeft(Array[String]()) { case (arr, (k, v)) => arr ++ Array("--" + k, v) }
+    correctedSparkConf.foldLeft(Array.empty[String]) { case (arr, (k, v)) => arr ++ Array("--" + k, v) }
   }
 
   def getSparkBenchJar(sparkContextConf: Config): String = {
@@ -90,16 +90,30 @@ object SparkLaunchConf {
     }
   }
 
-  def getSparkConfs(conf: Config): Array[String] = {
-    val sparkConfMaps = Try(conf.getObject("conf")).map(toStringMap).getOrElse(Map.empty)
-    sparkConfMaps.foldLeft(Array[String]()) { case (arr, (k, v)) => arr ++ Array("--conf", s"$k=$v") }
+  private[sparklaunch] def getEnvConfs: Map[String, String] = sys.env.get("SPARK_CONF_ENV_OVERRIDES") match {
+    case Some(kvs) if kvs.nonEmpty => kvs.split(';').flatMap { kv =>
+      kv.split('=').toList match {
+        case hd :: Nil => None
+        case hd :: tls if tls.size > 1 => None
+        case hd :: tls => Some((hd, tls.head))
+        case _ => None
+      }
+    }.toMap
+    case _ => Map.empty[String, String]
   }
 
+  def getSparkConfs(conf: Config): Array[String] = {
+    val sparkConfMaps = Try(conf.getObject("conf")).map(toStringMap).getOrElse(Map.empty)
+    val envConfs = getEnvConfs
+    val envConfStrings = envConfs.foldLeft(Array.empty[String]) { case (arr, (k, v)) => arr ++ Array("--conf", s"$k=$v") }
+    sparkConfMaps.foldLeft(envConfStrings) { case (arr, (k, v)) =>
+      envConfs.get(k) match {
+        case Some(envConfMap) => arr
+        case _ => arr ++ Array("--conf", s"$k=$v")
+      }
+    }
+  }
 
   def toStringMap(co: ConfigObject): Map[String,String] =
     co.asScala.toMap.mapValues(v => v.unwrapped.toString)
-
-
 }
-
-
