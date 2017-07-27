@@ -2,6 +2,7 @@ package com.ibm.sparktc.sparkbench.workload.exercise
 
 import com.ibm.sparktc.sparkbench.workload.{Workload, WorkloadDefaults}
 import com.ibm.sparktc.sparkbench.utils.GeneralFunctions._
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 case class CacheTestResult(runIndex: Int,timestamp1: Long, runTime: Long)
@@ -30,23 +31,24 @@ case class CacheTest(input: Option[String],
   override def doWorkload(df: Option[DataFrame], spark: SparkSession): DataFrame = {
     import spark.implicits._
 
-    val cached = df.getOrElse(Seq.empty[(Int)].toDF).cache
+    val cached = df.getOrElse(Seq.empty[(Long)].toDF)
+      .map(row => row.getLong(0))
+      .rdd
+      .cache
 
     val timestamp1 = System.currentTimeMillis()
-    val (resultTime1, _) = time(cached.count)
+    val (resultTime1, _) = time(runCalc(cached))
     Thread.sleep(sleepMs)
     val timestamp2 = System.currentTimeMillis()
-    val (resultTime2, _) = time(cached.count)
-    Thread.sleep(sleepMs)
-    val timestamp3 = System.currentTimeMillis()
-    val (resultTime3, _) = time(cached.count)
+    val (resultTime2, _) = time(runCalc(cached))
 
     val results = Seq(CacheTestResult(1, timestamp1, resultTime1),
-      CacheTestResult(2, timestamp2, resultTime2),
-      CacheTestResult(3, timestamp3, resultTime3))
+      CacheTestResult(2, timestamp2, resultTime2))
 
     cached.unpersist(blocking = true)
     
     spark.createDataFrame(results)
   }
+
+  def runCalc(rdd: RDD[Long]): Long = rdd.reduce((x, y) => x + y)
 }
