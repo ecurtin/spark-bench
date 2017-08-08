@@ -14,13 +14,17 @@ object CacheTest extends WorkloadDefaults {
     CacheTest(input = m.get("input").map(_.asInstanceOf[String]),
       output = m.get("workloadresultsoutputdir").map(_.asInstanceOf[String]),
       delayMs = getOrDefault(m, "delayMs", 0L),
-      sleepMs = getOrDefault(m, "sleepMs", 1000L))
+      sleepMs = getOrDefault(m, "sleepMs", 1000L),
+      mapDelayMicros = getOrDefault(m, "mapDelayMicros", 1L),
+    )
 }
 
 case class CacheTest(input: Option[String],
                      output: Option[String],
                      delayMs: Long,
-                     sleepMs: Long) extends Workload {
+                     sleepMs: Long,
+                     mapDelayMicros: Long
+                    ) extends Workload {
 
 
   override def run(spark: SparkSession): DataFrame = {
@@ -32,8 +36,12 @@ case class CacheTest(input: Option[String],
     import spark.implicits._
 
     val cached = df.getOrElse(Seq.empty[(Long)].toDF)
-      .map(row => row.getLong(0))
+      .map(row => row.getInt(0).toLong) //TODO bk getInt here?
       .rdd
+      .map { x =>
+        busyWait(mapDelayMicros * 1000)
+        x + 1
+      }
       .cache
 
     val timestamp1 = System.currentTimeMillis()
@@ -51,4 +59,13 @@ case class CacheTest(input: Option[String],
   }
 
   def runCalc(rdd: RDD[Long]): Long = rdd.reduce((x, y) => x + y)
+
+  //according to stack overflow this is the best way to wait for sub millisecond perios
+  //Tested on my machine and is accurate to around +- 200 nanos when you wait for a microsecond
+  private def busyWait(nanos: Long): Unit = {
+    val start = System.nanoTime
+    while(System.nanoTime - start < nanos) {
+      //do nothing
+    }
+  }
 }
