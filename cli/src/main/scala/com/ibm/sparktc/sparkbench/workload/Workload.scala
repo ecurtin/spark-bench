@@ -1,7 +1,8 @@
 package com.ibm.sparktc.sparkbench.workload
 
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import com.ibm.sparktc.sparkbench.utils.SparkFuncs.{load, addConfToResults}
+import com.ibm.sparktc.sparkbench.utils.SparkFuncs.{addConfToResults, load}
+import java.lang.reflect.Modifier
 
 trait WorkloadDefaults {
   val name: String
@@ -9,6 +10,7 @@ trait WorkloadDefaults {
 }
 
 trait Workload {
+
   val input: Option[String]
   val output: Option[String]
 
@@ -39,9 +41,10 @@ trait Workload {
     addConfToResults(res, toMap)
   }
 
-  def toMap: Map[String, Any] =
-    (Map[String, Any]() /: this.getClass.getDeclaredFields) { (a, f) =>
+  def toMap: Map[String, Any] = this.getClass.getDeclaredFields
+    .filterNot(f => Modifier.isTransient(f.getModifiers))
+    .map { f =>
       f.setAccessible(true)
-      a + (f.getName -> f.get(this))
-    }
+      f.getName -> f.get(this)
+    }.toMap
 }

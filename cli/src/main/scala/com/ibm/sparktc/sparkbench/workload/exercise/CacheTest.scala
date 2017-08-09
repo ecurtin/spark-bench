@@ -4,19 +4,19 @@ import com.ibm.sparktc.sparkbench.workload.{Workload, WorkloadDefaults}
 import com.ibm.sparktc.sparkbench.utils.GeneralFunctions._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.slf4j.LoggerFactory
 
 case class CacheTestResult(runIndex: Int,timestamp1: Long, runTime: Long)
 
 object CacheTest extends WorkloadDefaults {
   val name = "cachetest"
 
-  def apply(m: Map[String, Any]) =
-    CacheTest(input = m.get("input").map(_.asInstanceOf[String]),
-      output = m.get("workloadresultsoutputdir").map(_.asInstanceOf[String]),
-      delayMs = getOrDefault(m, "delayMs", 0L),
-      sleepMs = getOrDefault(m, "sleepMs", 1000L),
-      mapDelayMicros = getOrDefault(m, "mapDelayMicros", 1L),
-    )
+  def apply(m: Map[String, Any]) = CacheTest(
+    input = m.get("input").map(_.asInstanceOf[String]),
+    output = m.get("workloadresultsoutputdir").map(_.asInstanceOf[String]),
+    delayMs = getOrDefault(m, "delayMs", 0L),
+    sleepMs = getOrDefault(m, "sleepMs", 1000L),
+    mapDelayMicros = getOrDefault(m, "mapDelayMicros", 1L))
 }
 
 case class CacheTest(input: Option[String],
@@ -26,6 +26,7 @@ case class CacheTest(input: Option[String],
                      mapDelayMicros: Long
                     ) extends Workload {
 
+  @transient val logger = LoggerFactory.getLogger(getClass)
 
   override def run(spark: SparkSession): DataFrame = {
     Thread.sleep(delayMs)
@@ -46,7 +47,9 @@ case class CacheTest(input: Option[String],
 
     val timestamp1 = System.currentTimeMillis()
     val (resultTime1, _) = time(runCalc(cached))
+    logger.debug("start sleeping")
     Thread.sleep(sleepMs)
+    logger.debug("stop sleeping")
     val timestamp2 = System.currentTimeMillis()
     val (resultTime2, _) = time(runCalc(cached))
 
