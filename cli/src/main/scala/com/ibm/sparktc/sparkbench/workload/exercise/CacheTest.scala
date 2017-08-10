@@ -14,9 +14,9 @@ object CacheTest extends WorkloadDefaults {
   def apply(m: Map[String, Any]) = CacheTest(
     input = m.get("input").map(_.asInstanceOf[String]),
     output = m.get("workloadresultsoutputdir").map(_.asInstanceOf[String]),
-    delayMs = getOrDefault(m, "delayMs", 0L),
-    sleepMs = getOrDefault(m, "sleepMs", 1000L),
-    mapDelayMicros = getOrDefault(m, "mapDelayMicros", 1L))
+    delayMs = m("delayms").asInstanceOf[Int],
+    sleepMs = m("sleepms").asInstanceOf[Int],
+    mapDelayMicros = m("mapdelaymicros").asInstanceOf[Int])
 }
 
 case class CacheTest(input: Option[String],
@@ -47,9 +47,12 @@ case class CacheTest(input: Option[String],
 
     val timestamp1 = System.currentTimeMillis()
     val (resultTime1, _) = time(runCalc(cached))
-    logger.debug("start sleeping")
+
+    logger.debug(s"the cache timeout is ${spark.conf.get("spark.dynamicAllocation.cachedExecutorIdleTimeout", "not set")}")
+    logger.debug(s"start sleeping for $sleepMs millis at ${System.currentTimeMillis()}")
     Thread.sleep(sleepMs)
-    logger.debug("stop sleeping")
+    logger.debug(s"stop sleeping fo $sleepMs at ${System.currentTimeMillis()}")
+
     val timestamp2 = System.currentTimeMillis()
     val (resultTime2, _) = time(runCalc(cached))
 
