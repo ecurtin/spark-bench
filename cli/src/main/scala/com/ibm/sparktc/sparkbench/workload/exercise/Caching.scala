@@ -6,12 +6,17 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.LoggerFactory
 
-case class CacheTestResult(runIndex: Int,timestamp1: Long, runTime: Long)
+case class CachingResult(runIndex: Int, timestamp1: Long, runTime: Long)
 
-object CacheTest extends WorkloadDefaults {
+/**
+ * This workload is meant to test sparks use of cached dataframes. In this workload we time how long
+ * it takes to actualize a dataframe and cache it. Then we pause, then we time how long it takes to
+ * perform the same action on the cached dataframe again.
+ */
+object Caching extends WorkloadDefaults {
   val name = "cachetest"
 
-  def apply(m: Map[String, Any]) = CacheTest(
+  def apply(m: Map[String, Any]) = Caching(
     input = m.get("input").map(_.asInstanceOf[String]),
     output = m.get("workloadresultsoutputdir").map(_.asInstanceOf[String]),
     delayMs = m("delayms").asInstanceOf[Int],
@@ -19,11 +24,11 @@ object CacheTest extends WorkloadDefaults {
     mapDelayMicros = m("mapdelaymicros").asInstanceOf[Int])
 }
 
-case class CacheTest(input: Option[String],
-                     output: Option[String],
-                     delayMs: Long,
-                     sleepMs: Long,
-                     mapDelayMicros: Long
+case class Caching(input: Option[String],
+                   output: Option[String],
+                   delayMs: Long,
+                   sleepMs: Long,
+                   mapDelayMicros: Long
                     ) extends Workload {
 
   @transient val logger = LoggerFactory.getLogger(getClass)
@@ -56,8 +61,8 @@ case class CacheTest(input: Option[String],
     val timestamp2 = System.currentTimeMillis()
     val (resultTime2, _) = time(runCalc(cached))
 
-    val results = Seq(CacheTestResult(1, timestamp1, resultTime1),
-      CacheTestResult(2, timestamp2, resultTime2))
+    val results = Seq(CachingResult(1, timestamp1, resultTime1),
+      CachingResult(2, timestamp2, resultTime2))
 
     cached.unpersist(blocking = true)
     

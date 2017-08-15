@@ -13,7 +13,7 @@ object ConfigCreator {
     PartitionAndSleepWorkload,
     KMeansWorkload,
     LogisticRegressionWorkload,
-    CacheTest,
+    Caching,
     SQLWorkload,
     Sleep,
     SparkPi,
