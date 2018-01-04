@@ -17,21 +17,20 @@
 
 package com.ibm.sparktc.sparkbench.utils
 
+import org.apache.spark.mllib.linalg.Vectors
+import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.sql.functions.lit
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 
 object SparkFuncs {
 
   def writeToDisk(outputDir: String, data: DataFrame, spark: SparkSession, fileFormat: Option[String] = None): Unit = {
-
     verifyPathNotExistsOrThrow(outputDir, s"Error: $outputDir already exists!", spark)
-
     val format = (outputDir, fileFormat) match {
       case ("console", None) => "console"
       case (_, None)         => outputDir.split('.').last
       case (_, Some(s))      => s
     }
-
     format match {
       case "parquet" => data.write.parquet(outputDir)
       case "csv" => data.write.option("header", "true").csv(outputDir)
@@ -42,19 +41,26 @@ object SparkFuncs {
   }
 
   def load(spark: SparkSession, inputDir: String, fileFormat: Option[String] = None): DataFrame = {
-
     verifyPathExistsOrThrow(inputDir, s"Error: $inputDir does not exist!", spark)
-
     val inputFormat = fileFormat match {
       case None => inputDir.split('.').last
       case Some(s) => s
     }
-
     inputFormat match {
       case "parquet" => spark.read.parquet(inputDir)
       case "csv" | _ => spark.read.option("inferSchema", "true").option("header", "true").csv(inputDir) //if unspecified, assume csv
     }
   }
+
+  def dfToLabeledPoints(spark: SparkSession, df: DataFrame): Dataset[LabeledPoint] = df.map{
+    row => {
+        val doubles: Array[Double] = row.toSeq.toArray.map(_.asInstanceOf[Double])
+        val label = doubles.head
+        val features: Array[Double] = doubles.tail
+
+        LabeledPoint(label, Vectors.dense(features))
+      }
+    }
 
   def verifyPathExistsOrThrow(path: String, errorMessage: String, spark: SparkSession): String = {
     val conf = spark.sparkContext.hadoopConfiguration

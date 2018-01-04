@@ -17,11 +17,13 @@
 
 package com.ibm.sparktc.sparkbench.workload.ml
 
-import com.ibm.sparktc.sparkbench.testfixtures.SparkSessionProvider
+import com.ibm.sparktc.sparkbench.testfixtures.{BuildAndTeardownData, SparkSessionProvider}
 import com.ibm.sparktc.sparkbench.workload.ConfigCreator
 import org.scalatest.{FlatSpec, Matchers}
 
-class LogisticRegressionWorkloadTest extends FlatSpec with Matchers {
+//TODO read in from Parquet
+
+class LogisticRegressionWorkloadTest extends FlatSpec with Matchers with BuildAndTeardownData {
   private implicit val spark = SparkSessionProvider.spark
 
   private val cfg = Map(

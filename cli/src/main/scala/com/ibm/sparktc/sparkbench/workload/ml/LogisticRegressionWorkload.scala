@@ -22,7 +22,7 @@ import com.ibm.sparktc.sparkbench.workload.{Workload, WorkloadDefaults}
 import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.ml.classification.LogisticRegression
 import org.apache.spark.ml.evaluation.{BinaryClassificationEvaluator => BCE}
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 // ¯\_(ツ)_/¯
 // the logic for this workload came from:
@@ -47,7 +47,7 @@ case class LogisticRegressionResult(
 
 object LogisticRegressionWorkload extends WorkloadDefaults {
   val name = "lr-bml"
-  def apply(m: Map[String, Any]) = new LogisticRegressionWorkload(
+  def apply(m: Map[String, Any]): LogisticRegressionWorkload = new LogisticRegressionWorkload(
     input = Some(getOrThrow(m, "input").asInstanceOf[String]),
     output = getOrDefault[Option[String]](m, "workloadresultsoutputdir", None),
     testFile = getOrThrow(m, "testfile").asInstanceOf[String],
