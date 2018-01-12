@@ -23,7 +23,7 @@ import org.scalatest.{FlatSpec, Matchers}
 
 //TODO read in from Parquet
 
-class LogisticRegressionWorkloadTest extends FlatSpec with Matchers with BuildAndTeardownData {
+class LogisticRegressionWorkloadTest extends FlatSpec with Matchers {
   private implicit val spark = SparkSessionProvider.spark
 
   private val cfg = Map(

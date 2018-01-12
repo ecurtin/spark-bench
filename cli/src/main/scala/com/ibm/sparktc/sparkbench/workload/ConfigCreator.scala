@@ -17,12 +17,13 @@
 
 package com.ibm.sparktc.sparkbench.workload
 
-import com.ibm.sparktc.sparkbench.datageneration.GraphDataGen
-import com.ibm.sparktc.sparkbench.datageneration.mlgenerator.{KMeansDataGen, LinearRegressionDataGen}
 import com.ibm.sparktc.sparkbench.utils.GeneralFunctions.getOrThrow
 import com.ibm.sparktc.sparkbench.utils.SparkBenchException
+
+import com.ibm.sparktc.sparkbench.datageneration._
+import com.ibm.sparktc.sparkbench.datageneration.mlgenerator._
 import com.ibm.sparktc.sparkbench.workload.exercise._
-import com.ibm.sparktc.sparkbench.workload.ml.{KMeansWorkload, LogisticRegressionWorkload}
+import com.ibm.sparktc.sparkbench.workload.ml._
 import com.ibm.sparktc.sparkbench.workload.sql.SQLWorkload
 
 object ConfigCreator {
@@ -37,6 +38,7 @@ object ConfigCreator {
     SparkPi,
     KMeansDataGen,
     LinearRegressionDataGen,
+    LinearRegressionWorkload,
     GraphDataGen
   ).map(wk => wk.name -> wk).toMap
 

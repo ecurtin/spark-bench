@@ -21,6 +21,7 @@ import com.ibm.sparktc.sparkbench.utils.GeneralFunctions.{getOrDefault, getOrThr
 import com.ibm.sparktc.sparkbench.workload.{Workload, WorkloadDefaults}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import com.ibm.sparktc.sparkbench.utils.SparkFuncs._
+import com.ibm.sparktc.sparkbench.utils.GeneralFunctions._
 import org.apache.spark.ml.regression.LinearRegression
 
 case class LinearRegressionResult(
@@ -64,6 +65,7 @@ case class LinearRegressionWorkload(
                                    ) extends Workload {
 
   private[ml] def loadAndCache(fn: String)(implicit spark: SparkSession) = time {
+    // TODO this has to be loaded as DataSet[LabeledPoints]
     val ds = load(spark, fn).repartition(numPartitions)
     if (cacheEnabled) ds.cache
     ds
@@ -83,7 +85,7 @@ case class LinearRegressionWorkload(
 
     val loadTime = ltrainTime + ltestTime
 
-    spark.createDataFrame(
+    val df = spark.createDataFrame(
       Seq(
         LinearRegressionResult(
           name = LinearRegressionWorkload.name,
@@ -102,9 +104,8 @@ case class LinearRegressionWorkload(
           meanSquaredError = linearRegressionSummary.meanSquaredError
         ))
     )
+    addConfToResults(df, ccToMap(linearRegressionSummary))
   }
 
-  // TODO allow training datasets to be generated from test datasets
-  // TODO see if other info in linearRegressionSummary can be output easily, look into how results are curried with spark info
-  // TODO tests :(
+  // TODO sanity check it
 }

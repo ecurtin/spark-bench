@@ -27,6 +27,8 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types._
 import com.ibm.sparktc.sparkbench.utils.GeneralFunctions._
 
+import scala.util.{Failure, Success, Try}
+
 /*
  * (C) Copyright IBM Corp. 2015 
  *
@@ -107,7 +109,10 @@ case class KMeansWorkload(input: Option[String],
         row => {
           val range = 0 until row.size
           val doublez: Array[Double] = range.map(i => {
-            val x = row.getDouble(i)
+            val x = Try(row.getDouble(i)) match {
+              case Success(d) => d
+              case Failure(_) => row.getString(i).toDouble
+            }
             x
           }).toArray
           Vectors.dense(doublez)

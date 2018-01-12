@@ -23,7 +23,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import com.ibm.sparktc.sparkbench.utils.SparkBenchException
 import com.ibm.sparktc.sparkbench.utils.GeneralFunctions.{getOrDefault, getOrThrow, time}
-import com.ibm.sparktc.sparkbench.utils.SparkFuncs.writeToDisk
+import com.ibm.sparktc.sparkbench.utils.SparkFuncs._
 import com.ibm.sparktc.sparkbench.workload.{Workload, WorkloadDefaults}
 import org.apache.spark.sql.types.{LongType, StringType, StructField, StructType}
 
@@ -72,13 +72,13 @@ case class LinearRegressionDataGen (
     }
 
     import spark.implicits._
-    val (convertTime, dataDF) = time {
-      data.toDF
+    val (convertTime, dataDF: DataFrame) = time {
+      rddLabeledPointToDF(spark, data)
     }
 
     val (saveTime, _) = time {
       val outputstr = output.get
-      if(outputstr.endsWith(".csv")) throw SparkBenchException("LabeledPoints cannot be saved to CSV. Please try outputting to Parquet instead.")
+//      if(outputstr.endsWith(".csv")) throw SparkBenchException("LabeledPoints cannot be saved to CSV. Please try outputting to Parquet instead.")
       writeToDisk(output.get, dataDF, spark)
     }//TODO you can't output this to CSV. Parquet is fine
 

@@ -19,8 +19,10 @@ package com.ibm.sparktc.sparkbench.utils
 
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.mllib.regression.LabeledPoint
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions.lit
-import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
+import org.apache.spark.sql.types.{DoubleType, StructField, StructType}
+import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 
 object SparkFuncs {
 
@@ -52,7 +54,7 @@ object SparkFuncs {
     }
   }
 
-  def dfToLabeledPoints(spark: SparkSession, df: DataFrame): Dataset[LabeledPoint] = df.map{
+  def dfToLabeledPoints(spark: SparkSession, df: DataFrame): RDD[LabeledPoint] = df.rdd.map {
     row => {
         val doubles: Array[Double] = row.toSeq.toArray.map(_.asInstanceOf[Double])
         val label = doubles.head
@@ -61,6 +63,22 @@ object SparkFuncs {
         LabeledPoint(label, Vectors.dense(features))
       }
     }
+
+  def rddLabeledPointToDF(spark: SparkSession, rdd: RDD[LabeledPoint]): DataFrame = {
+    val rowRDD: RDD[Row] = rdd.map{
+
+      point => Row.fromSeq(Seq(point.label) ++ point.features.toArray)
+    }
+    val point: LabeledPoint = rdd.first()
+    val names: Seq[String]  = point.features.toArray.indices.map(i => s"Features[$i]")
+
+    val schema = {
+      val first = StructField("label", DoubleType, nullable = false)
+      val theRest = names.map(StructField(_, DoubleType, nullable = false))
+      StructType(Seq(first) ++ theRest)
+    }
+    spark.createDataFrame(rowRDD, schema)
+  }
 
   def verifyPathExistsOrThrow(path: String, errorMessage: String, spark: SparkSession): String = {
     val conf = spark.sparkContext.hadoopConfiguration
