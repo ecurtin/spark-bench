@@ -29,7 +29,8 @@ case class SQLWorkloadResult(
                             loadTime: Long,
                             queryTime: Long,
                             saveTime: Long = 0L,
-                            total_Runtime: Long
+                            total_Runtime: Long,
+                            result_count: Long
                             )
 
 object SQLWorkload extends WorkloadDefaults {
@@ -59,9 +60,11 @@ case class SQLWorkload (input: Option[String],
     df
   }
 
-  def query(df: DataFrame, spark: SparkSession): (Long, DataFrame) = time {
+  def query(df: DataFrame, spark: SparkSession): (Long, (DataFrame, Long)) = time {
     df.createOrReplaceTempView("input")
-    spark.sqlContext.sql(queryStr)
+    val result = spark.sqlContext.sql(queryStr)
+    val count = result.count()
+    (result, count)
   }
 
   def save(res: DataFrame, where: String, spark: SparkSession): (Long, Unit) = time {
@@ -76,7 +79,7 @@ case class SQLWorkload (input: Option[String],
   override def doWorkload(df: Option[DataFrame] = None, spark: SparkSession): DataFrame = {
     val timestamp = System.currentTimeMillis()
     val (loadtime, df) = loadFromDisk(spark)
-    val (querytime, res) = query(df, spark)
+    val (querytime, (res, count)) = query(df, spark)
     val (savetime, _) = output match {
       case Some(dir) => save(res, dir, spark)
       case _ => (0L, Unit)
@@ -90,10 +93,9 @@ case class SQLWorkload (input: Option[String],
         loadtime,
         querytime,
         savetime,
-        total
+        total,
+        count
       )
     ))
   }
-
 }
-
